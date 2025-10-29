@@ -66,14 +66,14 @@ Bar_Colors=[color.rgb(196/255, 14/255, 14/255),color.rgb(240/255, 137/255, 2/255
 	color.rgb(30/255, 181/255, 13/255),color.rgb(20/255, 227/255, 250/255), # Green, Turqoise
 	color.rgb(14/255, 26/255, 196/255),color.rgb(106/255, 9/255, 217/255),color.rgb(242/255, 41/255, 112/255), # Blue, Purple, Pink-Red
 	color.rgb(237/255, 83/255, 245/255),color.rgb(209/255, 207/255, 207/255)] # Bubblegum Pink, Dusty White
-EXP_Health_Text=Text(parent=camera.ui,text=f'EXP: {EXP_Health:.1f}/{NEXT_LEVEL_Health:.1f}',origin=(-0.5,0),color=Bar_Colors[3],scale=(1.5,1.75),position=(-0.05,0.48))
+EXP_Health_Text=Text(parent=Health_Bar_bg,text=f'EXP: {EXP_Health:.1f}/{NEXT_LEVEL_Health:.1f}',origin=(-0.5,0),color=Bar_Colors[3],scale=(2,30),position=(1,-0.02))
 
 # -- UI Elements -- Defense --
 
 Defense_bg=Entity(parent=camera.ui,model='quad',color=color.rgba(12/255,14/255,54/255),scale=(0.7,0.06),origin=(-0.5,0),position=(-0.75,0.42,-0.25))
 Defense_Text=Text(parent=Defense_bg,text=f'Defense: {round(Current_Defense)}',color=color.white,scale=(2,20),origin=(-0.5,0),z=-1)
-Defense_fg=Entity(parent=Defense_bg,model='quad',color=color.rgb(40/255,47/255,247/255),scale=(1,1),origin=(-0.5,0),z=-0.26)
-EXP_Defense_Text=Text(parent=camera.ui,text=f'EXP: {EXP_Defense:.1f}/{NEXT_LEVEL_Defense:.1f}',origin=(-0.5,0),color=Bar_Colors[5],scale=(1.5,1.75),position=(-0.05,0.42))
+Defense_fg=Entity(parent=Defense_bg,model='quad',texture='health-bar-vector',color=color.rgb(40/255,47/255,247/255),scale=(1,1),origin=(-0.5,0),z=-0.26)
+EXP_Defense_Text=Text(parent=Defense_bg,text=f'EXP: {EXP_Defense:.1f}/{NEXT_LEVEL_Defense:.1f}',origin=(-0.5,0),color=Bar_Colors[5],scale=(2,30),position=(1,0))
 
 # -- UI Elements -- Strength --
 
@@ -82,14 +82,14 @@ Strength_Text=Text(parent=Strength_bg,text=f'Strength: {round(Current_Strength)}
 
 # -- Buttons --
 
+Lever_Button_Pannel=Button(parent=camera.ui,text='',texture='left-arrow-thumb-box',color=color.orange,origin=(0.5,0.5),position=(0.75,-0.4),scale=(0.05,0.05))
 Damage_Button=Button(parent=camera.ui,text="You Masochist (;",color=color.red,x=0,y=-0.1,scale=(0.3, 0.1))
 Heal_Button=Button(parent=camera.ui,text='How Boring ):',color=color.green,position=(0,0.1),scale=(0.3,0.1))
 Corrosion_Button=Button(parent=camera.ui,text='More Damage!',color=color.azure,position=(0,0),scale=(0.3,0.1))
-Save_Button=Button(parent=camera.ui,text='Save',color=color.black,scale=(0.2,0.1),position=(-0.1,-0.45))
-Load_Button=Button(parent=camera.ui,text='Load',color=color.black,scale=(0.2,0.1),position=(0.1,-0.45))
+Save_Button=Button(parent=camera.ui,text='Save',color=color.black,scale=(0.2,0.1),position=(-0.105,-0.45))
+Load_Button=Button(parent=camera.ui,text='Load',color=color.black,scale=(0.2,0.1),position=(0.105,-0.45))
 
 # -- Logic -- Game Data ; Saving & Loading --
-
 
 def Get_Data():
 	'''
@@ -113,7 +113,7 @@ def Save_Data(*args,filename='save.dat'):
 	path=os.path.join(save_dir, filename)
 	with open(path,'wb') as f:
 		pickle.dump(data,f)
-	save_text=Text(parent=camera.ui,text='Game Saved!',origin=(0,0),position=(0,-0.35))
+	save_text=Text(parent=camera.ui,text='Game Saved!',origin=(0,0),scale=2,position=(0,-0.375))
 	destroy(save_text,delay=3)
 
 def Load_Data(filename='save.dat'):
@@ -126,16 +126,17 @@ def Load_Data(filename='save.dat'):
 	try:
 		with open(path,'rb') as f:
 			loaded_data=pickle.load(f)
-			load_text=Text(parent=camera.ui,text='Game loaded successfully!',origin=(0,0),position=(0,-0.35))
+			load_text=Text(parent=camera.ui,text='Game loaded successfully!',origin=(0,0),scale=2,position=(0,-0.375))
 			destroy(load_text,delay=3)
 			for key,value in loaded_data.items():
 				globals()[key] = value
+			Rebuild_Health_Bars()
 			Multi_Health_Update(Current_Health)
 			Defense_Update(Current_Defense)
 			Health_EXP_Update(0)
 			Defense_EXP_Update(0)
 	except FileNotFoundError:
-		load_text=Text(parent=camera.ui,text='Save file not found!',origin=(0,0),position=(0,-0.35))
+		load_text=Text(parent=camera.ui,text='Save file not found!',origin=(0,0),scale=2,position=(0,-0.375))
 		destroy(load_text,delay=3)
 		return None
 
@@ -198,7 +199,7 @@ def Rebuild_Health_Bars():
 	for i in range(Count_of_Health_Bars): # Going to use idea that i=0 is top bar, descending. If Max_Health=400, i=0 is green
 		base_index=(Count_of_Health_Bars-1)-i
 		Color_index=base_index % len(Bar_Colors)
-		bar=Entity(parent=Health_Bar_bg,model='quad',scale=(1,1),origin=(-0.5,0),position=(0,0,-1+0.05*i))
+		bar=Entity(parent=Health_Bar_bg,model='quad',texture='health-bar-vector',scale=(1,1),origin=(-0.5,0),position=(0,0,-1+0.05*i))
 		bar.color=Bar_Colors[Color_index]
 		Health_Bars.append(bar)
 
@@ -241,7 +242,7 @@ def Defense_EXP_Update(exp):
 		EXP_Health_Text.text=f'EXP: {EXP_Defense:.1f}/{NEXT_LEVEL_Defense:.1f}'
 		Defense_Update(Current_Defense+1)
 
-# -- Logic -- Damage Button --
+# -- Logic -- Damage Button & Monsters --
 
 def Damage_button_click():
 	'''
@@ -251,6 +252,7 @@ def Damage_button_click():
 	Damage=random.randint(25,75)
 	print(f"Took {Damage} Damage")
 	Damage_via_Defense(Damage)
+Damage_Button.on_click=Damage_button_click
 
 # -- Logic -- Health Button --
 
@@ -261,6 +263,7 @@ def Heal_Button_click():
 	global Current_Health
 	heal=random.randint(40,60)
 	Multi_Health_Update(Current_Health+heal)
+Heal_Button.on_click=Heal_Button_click
 
 # -- Logic -- Corrosion Button --
 
@@ -271,23 +274,23 @@ def Corrosion_Button_click():
 	global Current_Defense
 	corrosion=random.randint(1,5)
 	Defense_Update(Current_Defense-corrosion)
+Corrosion_Button.on_click=Corrosion_Button_click
 
 # -- Logic -- Menu Open & Close --
+
+UI_Master_List=[Health_Bar_bg,Defense_bg,Strength_bg,Save_Button,Load_Button,Corrosion_Button,Damage_Button,Heal_Button]
 
 def update_game_state():
 	'''
 	Prevents buttons from being assigned a function while in the start menu.
 	'''
 	if game_state=='menu':
-		Corrosion_Button.enabled=False
-		Damage_Button.enabled=False
-		Heal_Button.enabled=False
+		for i in UI_Master_List:
+			i.enabled=False
 		pass
 	else:
-		Corrosion_Button.enabled=True
-		Damage_Button.enabled=True
-		Heal_Button.enabled=True
-		
+		for i in UI_Master_List:
+			i.enabled=True
 
 def Open_Menu(key):
 	global game_state
@@ -300,12 +303,7 @@ def input(key):
 	Open_Menu(key)
 
 # -- Starting Updates & Run --
-Corrosion_Button.on_click=Corrosion_Button_click
-Damage_Button.on_click=Damage_button_click
-Heal_Button.on_click=Heal_Button_click
-Corrosion_Button.enabled=False
-Damage_Button.enabled=False
-Heal_Button.enabled=False
+update_game_state()
 Rebuild_Health_Bars()
 Multi_Health_Update(Max_Health)
 Defense_Update(Max_Defense)
