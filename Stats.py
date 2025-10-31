@@ -9,16 +9,18 @@ game_state='menu'
 
 Start_Menu_Panel=Entity(parent=camera.ui,texture='black-white-box',model='quad',scale=(1*window.aspect_ratio,1),z=-20)
 # -- Menu Buttons --
-Start_Button=Button(parent=Start_Menu_Panel,texture='game-button',text='Start Game',color=color.orange,scale=(0.3,0.1),position=(0,.1,-1))
-Quit_Button=Button(parent=Start_Menu_Panel,texture='game-button',text='Quit Game',color=color.orange,scale=(0.3,0.1),position=(0,-.1,-1))
+Start_Button=Button(parent=Start_Menu_Panel,texture='game-button',text='Start Game',color=color.white,scale=(0.3,0.1),origin=(0,0),position=(0,0,-1))
+Quit_Button=Button(parent=Start_Menu_Panel,texture='game-button',text='Quit Game',color=color.white,scale=(0.3,0.1),origin=(0,0),position=(0,-.2,-1))
+Title_Text=Text(parent=Start_Menu_Panel,text='Stats!',color=color.white,origin=(0,0),scale=8,position=(0,0.25),z=-1)
 
 # -- Logic -- Start Menu --
 
 def Start_Game():
 	global game_state
 	game_state='game'
-	Start_Menu_Panel.fade_out(duration=1)
-	Start_Menu_Panel.enabled=False
+	Start_Button.text='Continue'
+	Title_Text.text='Paused'
+	Save_Button.enabled=True ; Load_Button.enabled=True
 	update_game_state()
 
 def Quit_Game():
@@ -35,9 +37,9 @@ Bar_Colors=[color.rgb(196/255, 14/255, 14/255),color.rgb(240/255, 137/255, 2/255
 	color.rgb(237/255, 83/255, 245/255),color.rgb(209/255, 207/255, 207/255)] # Bubblegum Pink, Dusty White
 
 Player_Stats={
-	"Name":'Zena',
-	"Max_Health":493,"Current_Health":1,"EXP_Health":0,"Segment_Size":0,"Count_of_Health_Bars":0,"NEXT_LEVEL_Health":0, # Health Stats
-	"Max_Defense":50,"Current_Defense":1,"EXP_Defense":0,"NEXT_LEVEL_Defense":0, # Defense Stats
+	"Name":'Zena',"Profile_Picture":0,
+	"Max_Health":93,"Current_Health":1,"EXP_Health":0,"Segment_Size":0,"Count_of_Health_Bars":0,"NEXT_LEVEL_Health":0, # Health Stats
+	"Max_Defense":100,"Current_Defense":1,"EXP_Defense":0,"NEXT_LEVEL_Defense":0, # Defense Stats
 	"Max_Strength":10,"Current_Strength":1,"EXP_Strength":0,"NEXT_LEVEL_Strength":0 # Strength Stats
 	}
 Player_UI={
@@ -74,15 +76,14 @@ Regeneration=0
 
 # -- Buttons --
 
-Lever_Button_Pannel=Button(parent=camera.ui,text='',texture='left-arrow-thumb-box',color=color.orange,origin=(0.5,0.5),position=(0.5*window.aspect_ratio,-0.4),scale=(0.05,0.05))
-Lever_Button_Pannel_Out=Button(parent=camera.ui,text='',texture='left-arrow-thumb-box',color=color.orange,origin=(0.5,0.5),position=(0.5*window.aspect_ratio-0.4,-0.4),scale=(0.05,0.05))
-Button_Pannel=Entity(parent=camera.ui,model='quad',color=color.black50,origin=(0.5,0),scale=(0.4,1),position=(0.5*window.aspect_ratio,0,-1))
+Button_Pannel=Entity(parent=camera.ui,model='quad',color=color.black50,origin=(0.5,0),scale=(0.4,1),position=(0.5*window.aspect_ratio+0.4,0,-1))
+Lever_Button_Pannel=Button(parent=Button_Pannel,texture='left-arrow-thumb-box',color=color.orange,origin=(0.5,0),position=(-1,0),scale=(0.15,0.05))
 Damage_Button=Button(parent=Button_Pannel,texture='game-button-2',text="You Masochist (;",color=color.red,origin=(0,0),position=(-0.5,-0.1,-1),scale=(0.9, 0.1))
 Heal_Button=Button(parent=Button_Pannel,texture='game-button-2',text='How Boring ):',color=color.green,origin=(0,0),position=(-0.5,0.1,-1),scale=(0.9,0.1))
 Corrosion_Button=Button(parent=Button_Pannel,texture='game-button-2',text='More Damage!',color=color.azure,origin=(0,0),position=(-0.5,0),scale=(0.9,0.1))
 Weaken_Button=Button(parent=Button_Pannel,texture='game-button-2',text='Weaker Darling',color=color.orange,origin=(0,0),position=(-0.5,-0.2),scale=(0.9,0.1))
-Save_Button=Button(parent=camera.ui,text='Save',color=color.black,scale=(0.2,0.1),position=(-0.105,-0.45))
-Load_Button=Button(parent=camera.ui,text='Load',color=color.black,scale=(0.2,0.1),position=(0.105,-0.45))
+Save_Button=Button(parent=Start_Menu_Panel,text='Save',color=color.black,scale=(0.2,0.1),position=(-0.101,-0.44,-1))
+Load_Button=Button(parent=Start_Menu_Panel,text='Load',color=color.black,scale=(0.2,0.1),position=(0.101,-0.44,-1))
 
 # -- Logic -- Game Data ; Saving & Loading --
 
@@ -111,7 +112,7 @@ def Load_Data(filename='save.dat'):
 			loaded_data=pickle.load(f)
 			load_text=Text(parent=camera.ui,text='Game loaded successfully!',origin=(0,0),scale=2,position=(0,-0.375))
 			destroy(load_text,delay=3)
-			Player_Stats=loaded_data
+			Player_Stats.update(loaded_data)
 			Rebuild_Health_Bars(Player_Stats,Player_UI)
 			Multi_Health_Update(Player_Stats["Current_Health"],Player_Stats,Player_UI)
 			Defense_Update(Player_Stats["Current_Defense"],Player_Stats,Player_UI)
@@ -141,7 +142,10 @@ def Multi_Health_Update(new_health,target_stats,target_ui):
 			bar.scale_x=1
 		elif target_stats["Current_Health"]<=barmin:
 			bar.scale_x=0
-		elif target_stats["Current_Health"]>barmin and target_stats["Current_Health"]<barmax:
+		elif target_stats["Current_Health"]>barmin and target_stats["Current_Health"]<barmax and bar.scale_x!=1:
+			segment_health=target_stats["Current_Health"]-barmin
+			bar.animate_scale_x(segment_health/target_stats["Segment_Size"],duration=0.4,curve=curve.out_expo)
+		elif target_stats["Current_Health"]>barmin and target_stats["Current_Health"]<barmax and bar.scale_x==1:
 			segment_health=target_stats["Current_Health"]-barmin
 			bar.scale_x=segment_health/target_stats["Segment_Size"]
 		else:
@@ -252,18 +256,22 @@ def Strength_EXP_Update(exp,target_stats,target_ui):
 
 # -- Logic -- Button Pannel --
 
+Movement_Number=1
 def Open_Button_Pannel():
-	Lever_Button_Pannel.enabled=False
-	Button_Pannel.enabled=True
-	Lever_Button_Pannel_Out.enabled=True
+	global Movement_Number
+	if Movement_Number%2==0:
+		Button_Pannel.animate_x(0.5*window.aspect_ratio,duration=0.6,curve=curve.out_quad)
+		Movement_Number+=1
+	else:
+		Button_Pannel.animate_x(0.5*window.aspect_ratio+0.4,duration=0.6,curve=curve.out_quad)
+		Movement_Number+=1
 
 def Close_Button_Pannel():
-	Lever_Button_Pannel.enabled=True
-	Button_Pannel.enabled=False
-	Lever_Button_Pannel_Out.enabled=False
+	global Movement_Number
+	Button_Pannel.x=0.5*window.aspect_ratio+0.4
+	Movement_Number+=1
 
 Lever_Button_Pannel.on_click=Open_Button_Pannel
-Lever_Button_Pannel_Out.on_click=Close_Button_Pannel
 
 # -- Logic -- Damage Button --
 
@@ -309,7 +317,7 @@ Weaken_Button.on_click=Weaken_Button_click
 # -- Logic -- Menu Open & Close --
 
 Game_UI_Master_List=[Lever_Button_Pannel,*Player_UI.values()]
-Menu_UI_Master_List=[Start_Menu_Panel,Save_Button,Load_Button]
+Menu_UI_Master_List=[Start_Menu_Panel]
 
 def update_game_state():
 	'''
@@ -322,22 +330,17 @@ def update_game_state():
 		Close_Button_Pannel()
 		for i in Game_UI_Master_List:
 			i.enabled=False
-		for i in Menu_UI_Master_List:
-			i.enabled=True
-		pass
+			Start_Menu_Panel.animate_y(0,duration=0.5,curve=curve.out_expo)
 	else:
 		for i in Game_UI_Master_List:
 			i.enabled=True
-		for i in Menu_UI_Master_List:
-			i.enabled=False
-
+			Start_Menu_Panel.animate_y(-1,duration=0.5,curve=curve.out_expo)
 def Open_Menu(key):
 	global game_state
 	if key=='escape':
 		if game_state=='game':
 			game_state='menu'
 			update_game_state()
-			Start_Button.text='Continue'
 		else:
 			game_state='game'
 			update_game_state()
@@ -345,11 +348,8 @@ def input(key):
 	Open_Menu(key)
 
 # -- Starting Updates & Run --
-Button_Pannel.enabled=False
-Lever_Button_Pannel_Out.enabled=False
-update_game_state()
-Rebuild_Health_Bars(Player_Stats,Player_UI)
-Multi_Health_Update(Player_Stats["Max_Health"],Player_Stats,Player_UI)
-Defense_Update(Player_Stats["Max_Defense"],Player_Stats,Player_UI)
-Strength_Update(Player_Stats["Max_Strength"],Player_Stats,Player_UI)
+update_game_state() 
+Save_Button.enabled=False ; Load_Button.enabled=False
+Rebuild_Health_Bars(Player_Stats,Player_UI) ; Multi_Health_Update(Player_Stats["Max_Health"],Player_Stats,Player_UI) ; 
+Defense_Update(Player_Stats["Max_Defense"],Player_Stats,Player_UI) ; Strength_Update(Player_Stats["Max_Strength"],Player_Stats,Player_UI)
 app.run()
